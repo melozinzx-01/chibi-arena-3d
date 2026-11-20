@@ -92,7 +92,7 @@ small{color:#b6c5d8;display:block;line-height:1.5;margin-top:12px}
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <script>
 (()=>{
- const $=id=>document.getElementById(id);
+const $=id=>document.getElementById(id);
 const skinDefs=[
  ['Soldado Solar',0xb87932,0xf4c13f,'hair'],['Lança-Foguetes',0x4b8050,0x9ab56a,'helmet'],['Samurai Rubro',0xc83232,0xf5c84c,'samurai'],['Caixa Tática',0xe2b83f,0x263c7d,'box'],['Guerreiro Folha',0x3f6240,0x769b45,'ghillie'],['Ninja Noturno',0x202735,0x6b4ce0,'mask'],['Ninja Violeta',0x6034b5,0xa58aff,'ninja'],['Lutador Urbano',0x313b4a,0xd94c43,'bandana'],['Robô Azul',0x2463b5,0x52c9f2,'robot'],['Guardião Solar',0xe1a72f,0xffdc64,'horn'],['Explorador Tóxico',0xd4a52d,0xe7e4c8,'gas'],['Patrulheiro Verde',0x39834e,0xf4d24f,'soldier'],['Cavaleiro Ônix',0x30343e,0xc5cbd5,'knight'],['Piloto Ártico',0x416c9b,0x8ce0ff,'visor'],['Xerife do Deserto',0x77512f,0xd9aa55,'cowboy'],['Agente Azul',0x3265c5,0x5fa8ff,'bluehair'],['Alienígena',0x5368a5,0xb6c8ff,'alien'],['Soldado Rubro',0xc34c35,0xffd45b,'hair'],['Urso de Combate',0x9b623d,0xe5a34b,'bear'],['Bobo Sombrio',0x44326e,0x9c68d9,'jester'],['Galinha Guerreira',0xe5e2d3,0xf1bd35,'chicken']
 ];
@@ -153,8 +153,9 @@ function makeDude(color,isPlayer=false,skinIndex=selected){
  }
  const gun=new THREE.Group();const barrel=new THREE.Mesh(new THREE.CylinderGeometry(.055,.07,.62,8),dark);barrel.rotation.x=Math.PI/2;barrel.position.z=.28;gun.add(barrel);const grip=new THREE.Mesh(new THREE.BoxGeometry(.12,.24,.14),mat(0x9aa7b8));grip.position.set(0,-.13,.12);gun.add(grip);gun.position.set(.42,.93,.43);g.add(gun);
  g.userData={hp:100,isPlayer,arms,legs,gun,body,head,baseBodyY:.68};return g;
-           }
-  function terrainHeight(x,z){
+}
+ <script>
+function terrainHeight(x,z){
  const hills=[[-175,-120,17,68],[-85,155,23,82],[145,125,19,72],[190,-155,27,88],[-220,190,14,58],[35,-220,12,70]];
  let h=2.2*Math.sin(x*.018)*Math.cos(z*.021)+1.4*Math.sin((x+z)*.035);
  for(const [hx,hz,amp,spread] of hills){const d=((x-hx)**2+(z-hz)**2)/(spread*spread);h+=amp*Math.exp(-d*1.45)}
@@ -231,7 +232,7 @@ function init(){
  bots=[];for(let i=0;i<9;i++){let a=i/9*Math.PI*2,r=95+Math.random()*145,x=Math.cos(a)*r,z=Math.sin(a)*r,b=makeDude(colors[(i+2)%skinDefs.length],false,(i+2)%skinDefs.length);b.position.set(x,65+Math.random()*22,z);b.userData={hp:100,alive:true,shoot:Math.random()*2,think:0,parachuting:true,parachute:makeParachute([0x57b9ff,0xffd45c,0x8b78e8,0x68d69b][i%4])};b.add(b.userData.parachute);scene.add(b);bots.push(b)}
  bullets=[];loot=[];for(let i=0;i<90;i++)spawnLoot();clock=new THREE.Clock();
 }
-  function spawnLoot(){let type=['ammo','med','armor','rifle','shotgun','sniper'][Math.floor(Math.random()*6)],x=(Math.random()-.5)*540,z=(Math.random()-.5)*540;if(Math.hypot(x,z)<12)return spawnLoot();let color=type==='med'?0x48e078:type==='ammo'?0xffd34d:type==='armor'?0x9d83ff:0x56c9ff;let m=new THREE.Mesh(new THREE.BoxGeometry(.75,.58,.75),mat(color));m.position.set(x,terrainHeight(x,z)+.45,z);scene.add(m);loot.push({mesh:m,type,phase:Math.random()*6})}
+function spawnLoot(){let type=['ammo','med','armor','rifle','shotgun','sniper'][Math.floor(Math.random()*6)],x=(Math.random()-.5)*540,z=(Math.random()-.5)*540;if(Math.hypot(x,z)<12)return spawnLoot();let color=type==='med'?0x48e078:type==='ammo'?0xffd34d:type==='armor'?0x9d83ff:0x56c9ff;let m=new THREE.Mesh(new THREE.BoxGeometry(.75,.58,.75),mat(color));m.position.set(x,terrainHeight(x,z)+.45,z);scene.add(m);loot.push({mesh:m,type,phase:Math.random()*6})}
 function toast(t){$('toast').textContent=t;$('toast').style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').style.display='none',1400)}
 function start(){resetControls();if(!window.THREE){alert('O motor 3D não carregou. Confira a conexão com a internet e abra o jogo novamente.');return}running=false;health=100;armor=0;kills=0;xp=0;coins=0;elapsed=0;zoneRadius=260;ammo=[...mag];reserve=[48,120,25,20];weaponIndex=0;gameOver=false;try{if(lobbyRenderer){cancelAnimationFrame(lobbyRaf);renderer=lobbyRenderer;lobbyRenderer=null;$('lobby3d').innerHTML=''}init();updateHud();$('menu').style.display='none';$('hud').style.display='block';running=true;animate()}catch(err){running=false;$('menu').style.display='flex';$('hud').style.display='none';console.error('Falha ao iniciar CHIBI ARENA 3D:',err);alert('Não foi possível iniciar os gráficos 3D. Detalhe: '+(err&&err.message?err.message:'erro desconhecido'))}}
 $('start').onclick=start;
@@ -254,6 +255,7 @@ function reload(){if(reloading||ammo[weaponIndex]===mag[weaponIndex]||reserve[we
 function pickup(){let nearest=-1,d=3.2;loot.forEach((l,i)=>{let n=player.position.distanceTo(l.mesh.position);if(n<d){d=n;nearest=i}});if(nearest<0){toast('Nenhum item por perto');return}let l=loot[nearest];if(l.type==='med'){health=Math.min(100,health+35);toast('+35 de vida')}else if(l.type==='armor'){armor=Math.min(100,armor+35);toast('+35 de escudo')}else if(l.type==='ammo'){reserve=reserve.map((v,i)=>v+[24,45,8,5][i]);toast('Munição coletada')}else{weaponIndex=({rifle:1,shotgun:2,sniper:3})[l.type];ammo[weaponIndex]=Math.max(ammo[weaponIndex],Math.floor(mag[weaponIndex]/2));toast(l.type.toUpperCase()+' coletada')}scene.remove(l.mesh);loot.splice(nearest,1);updateHud()}
 function updateHud(){$('stats').innerHTML=`❤️ ${Math.ceil(health)} &nbsp; 🛡️ ${Math.ceil(armor)}<br>🎯 Eliminações: ${kills} &nbsp; 👥 ${1+bots.filter(b=>b.userData.alive).length}<br>⭐ XP: ${xp} &nbsp; 🪙 ${coins}`;$('health').style.width=health+'%';$('healthtxt').textContent=`VIDA ${Math.ceil(health)} / 100 · ESCUDO ${Math.ceil(armor)}`;$('weapon').textContent=`${weaponNames[weaponIndex]} • ${ammo[weaponIndex]}/${reserve[weaponIndex]}`}
 function end(win){gameOver=true;running=false;toast(win?'🏆 VITÓRIA! ÚLTIMO SOBREVIVENTE!':'💀 VOCÊ FOI ELIMINADO');setTimeout(()=>{$('menu').style.display='flex';$('hud').style.display='none';$('sub').textContent=win?`Vitória! ${kills} eliminações.`:`Fim de jogo • ${kills} eliminações. Tente novamente!`;$('start').textContent='▶ JOGAR NOVAMENTE';if(renderer){renderer.dispose();renderer=null;$('game').innerHTML=''}initLobby3D()},1800)}
+ <script>
 function animate(){if(!running)return;requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.04);elapsed+=dt;if(fireHeld)fire();
  let mx=(keys.KeyD?1:0)-(keys.KeyA?1:0)+joystick.x,mz=(keys.KeyW?1:0)-(keys.KeyS?1:0)-joystick.y;
  if(isSprinting&&Math.abs(mx)<.08&&Math.abs(mz)<.08)mz=1;

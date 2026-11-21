@@ -1,1 +1,652 @@
 
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>CHIBI ARENA</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101820;color:white;font-family:Arial,sans-serif;touch-action:none;user-select:none}
+#game{position:fixed;inset:0}
+canvas{display:block}
+button{cursor:pointer}
+#hud{position:fixed;inset:0;pointer-events:none}
+#top{position:absolute;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;gap:7px}
+.panel{background:#101820dd;padding:10px;border:1px solid #ffffff55;border-radius:9px;font-weight:bold;font-size:12px}
+#healthBox{position:absolute;bottom:20px;left:15px;width:175px;background:#101820dd;padding:10px;border-radius:9px;font-size:13px}
+#healthBar{height:12px;background:#333;border-radius:20px;overflow:hidden;margin-top:6px}
+#healthFill{height:100%;background:#30d66a;width:100%}
+#crosshair{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:25px;text-shadow:0 0 5px black}
+#help{position:absolute;top:65px;left:12px;font-size:11px;text-shadow:0 1px 4px black}
+#controls{position:absolute;inset:0}
+#stick{position:absolute;bottom:35px;left:25px;width:125px;height:125px;border-radius:50%;background:#ffffff22;border:2px solid #ffffff77;pointer-events:auto}
+#knob{position:absolute;left:36px;top:36px;width:48px;height:48px;border-radius:50%;background:#ffffffaa}
+.action{position:absolute;right:24px;width:66px;height:66px;border-radius:50%;border:2px solid white;background:#182c40dd;color:white;font-weight:bold;font-size:12px;pointer-events:auto}
+#fire{bottom:35px;width:78px;height:78px;background:#a52c22ee}
+#run{bottom:125px;right:32px}
+#aim{bottom:205px;right:32px}
+#lobby{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:28px 18px;background:linear-gradient(180deg,#07121dcc,#07121d22 50%,#07121dee)}
+#lobby h1{font-size:35px;letter-spacing:3px;text-shadow:0 3px 12px black;margin:0}
+.subtitle{font-size:12px;letter-spacing:2px;color:#cbdce7;margin-top:8px}
+#skinPanel{width:min(420px,100%);background:#101820dd;border:1px solid #ffffff55;border-radius:15px;padding:14px}
+#skinPanel h3{text-align:center;margin:0 0 12px;font-size:14px}
+#skinOptions{display:flex;gap:8px}
+.skin{flex:1;padding:13px 3px;background:#263747;border:2px solid #667888;border-radius:9px;color:white;font-weight:bold;font-size:12px}
+.skin.selected{border-color:#37baff;background:#15537b}
+#startGame{width:min(340px,100%);padding:17px;background:linear-gradient(90deg,#0879d5,#16b7e9);color:white;border:0;border-radius:12px;font-size:20px;font-weight:900}
+#lobbyInfo{text-align:center;font-size:12px;color:#d6e1e9}
+#message{position:fixed;inset:0;z-index:12;display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;background:#07121dcc;pointer-events:auto}
+#messageText{font-size:27px;font-weight:900;padding:20px;text-shadow:0 3px 8px black}
+.uiButton{padding:14px 22px;background:#168bd2;color:white;border:0;border-radius:9px;font-size:15px;font-weight:bold;margin:7px}
+body:not(.playing) #top,body:not(.playing) #help,body:not(.playing) #crosshair,body:not(.playing) #healthBox,body:not(.playing) #controls{display:none!important}
+body.playing #lobby{display:none}
+@media(pointer:fine){#stick,#run,#aim,#fire{display:none}}
+</style>
+</head>
+<body>
+
+<div id="game"></div>
+
+<div id="lobby">
+ <div style="text-align:center">
+  <h1>CHIBI ARENA</h1>
+  <div class="subtitle">BATTLE ROYALE</div>
+ </div>
+
+ <div style="text-align:center;font-size:13px;color:#d4e4ef">
+  SEU PERSONAGEM
+  <div style="font-size:12px;color:#a9c4d8;margin-top:7px">Escolha sua aparência e entre na arena</div>
+ </div>
+
+ <div id="skinPanel">
+  <h3>SELECIONAR PERSONAGEM</h3>
+  <div id="skinOptions">
+   <button class="skin selected" data-skin="0">SOLDADO</button>
+   <button class="skin" data-skin="1">COMBATENTE</button>
+   <button class="skin" data-skin="2">ELITE</button>
+  </div>
+ </div>
+
+ <div style="width:100%;max-width:400px;text-align:center">
+  <div id="lobbyInfo">8 bots aguardando na arena</div><br>
+  <button id="startGame">INICIAR PARTIDA</button>
+ </div>
+</div>
+
+<div id="hud">
+ <div id="top">
+  <div class="panel">CHIBI ARENA</div>
+  <div class="panel">ELIMS: <span id="kills">0</span></div>
+  <div class="panel">BOTS: <span id="bots">0</span></div>
+ </div>
+ <div id="help">WASD: andar | Mouse: câmera | Clique: atirar</div>
+ <div id="crosshair">+</div>
+ <div id="healthBox">
+  <b>VIDA: <span id="healthText">100</span></b>
+  <div id="healthBar"><div id="healthFill"></div></div>
+ </div>
+ <div id="controls">
+  <div id="stick"><div id="knob"></div></div>
+  <button class="action" id="aim">MIRA</button>
+  <button class="action" id="run">CORRER</button>
+  <button class="action" id="fire">ATIRAR</button>
+ </div>
+</div>
+
+<div id="message">
+ <div id="messageText"></div>
+ <button class="uiButton" id="again">JOGAR NOVAMENTE</button>
+ <button class="uiButton" id="backLobby">VOLTAR AO LOBBY</button>
+</div>
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+
+// CONFIGURAÇÃO
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x91b8c7);
+scene.fog=new THREE.Fog(0x91b8c7,55,155);
+
+const camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,.1,300);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.8));
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.12;
+document.querySelector('#game').appendChild(renderer.domElement);
+
+// ILUMINAÇÃO
+scene.add(new THREE.HemisphereLight(0xd9edff,0x536044,2));
+
+const sun=new THREE.DirectionalLight(0xffe5bd,2.7);
+sun.position.set(-30,55,25);
+sun.castShadow=true;
+sun.shadow.mapSize.set(1024,1024);
+scene.add(sun);
+
+// MAPA
+const ground=new THREE.Mesh(
+ new THREE.PlaneGeometry(250,250),
+ new THREE.MeshStandardMaterial({color:0x536b43,roughness:1})
+);
+ground.rotation.x=-Math.PI/2;
+ground.receiveShadow=true;
+scene.add(ground);
+
+function makeBox(x,y,z,w,h,d,color){
+ const m=new THREE.Mesh(
+  new THREE.BoxGeometry(w,h,d),
+  new THREE.MeshStandardMaterial({color,roughness:.88})
+ );
+ m.position.set(x,y,z);
+ m.castShadow=true;
+ m.receiveShadow=true;
+ scene.add(m);
+ return m;
+}
+
+function tree(x,z){
+ const trunk=new THREE.Mesh(
+  new THREE.CylinderGeometry(.22,.35,2.8,7),
+  new THREE.MeshStandardMaterial({color:0x59412d})
+ );
+ trunk.position.set(x,1.4,z);
+ trunk.castShadow=true;
+ scene.add(trunk);
+
+ const crown=new THREE.Mesh(
+  new THREE.ConeGeometry(2,4.8,7),
+  new THREE.MeshStandardMaterial({color:0x315d36})
+ );
+ crown.position.set(x,4.5,z);
+ crown.castShadow=true;
+ scene.add(crown);
+}
+
+for(let i=0;i<95;i++){
+ let x=(Math.random()-.5)*190;
+ let z=(Math.random()-.5)*190;
+ if(Math.abs(x)<13&&Math.abs(z)<13)continue;
+ tree(x,z);
+}
+
+// CONSTRUÇÕES
+makeBox(-18,2,-15,12,4,10,0x777b79);
+makeBox(-18,4.5,-15,13,.8,11,0x343b40);
+makeBox(20,2,-25,13,4,12,0x92816d);
+makeBox(20,4.5,-25,14,.8,13,0x46433f);
+makeBox(28,1.5,18,9,3,8,0x6e7770);
+
+// PERSONAGEM
+function createCharacter(color){
+ const group=new THREE.Group();
+
+ const outfit=new THREE.MeshStandardMaterial({
+  color,roughness:.65,metalness:.05
+ });
+ group.userData.outfit=outfit;
+
+ const body=new THREE.Mesh(
+  new THREE.CapsuleGeometry(.43,.8,5,10),outfit
+ );
+ body.position.y=1.25;
+ body.castShadow=true;
+ group.add(body);
+
+ const head=new THREE.Mesh(
+  new THREE.SphereGeometry(.30,16,16),
+  new THREE.MeshStandardMaterial({color:0xc99572})
+ );
+ head.position.y=2.18;
+ head.castShadow=true;
+ group.add(head);
+
+ const legs=[];
+ for(let i=0;i<2;i++){
+  const leg=new THREE.Mesh(
+   new THREE.CapsuleGeometry(.16,.62,4,8),
+   new THREE.MeshStandardMaterial({color:0x293746})
+  );
+  leg.position.set(i===0?-.22:.22,.42,0);
+  leg.castShadow=true;
+  group.add(leg);
+  legs.push(leg);
+ }
+
+ const gun=new THREE.Mesh(
+  new THREE.BoxGeometry(.14,.14,.85),
+  new THREE.MeshStandardMaterial({color:0x202830,metalness:.6,roughness:.4})
+ );
+ gun.position.set(.43,1.48,-.43);
+ group.add(gun);
+
+ group.userData.legs=legs;
+ return group;
+}
+
+const skinColors=[0x315e91,0x39734b,0x55545e];
+
+let player=createCharacter(skinColors[0]);
+scene.add(player);
+
+// ESTADO DO JOGO
+let started=false;
+let gameOver=false;
+let health=100;
+let kills=0;
+let enemies=[];
+let enemyMeshes=[];
+
+let yaw=0;
+let pitch=.12;
+let aimMode=false;
+let running=false;
+let shooting=false;
+let lastShot=0;
+
+const keys={};
+let joy={x:0,y:0};
+
+// SELEÇÃO DE SKIN
+document.querySelectorAll('.skin').forEach(b=>{
+ b.addEventListener('click',()=>{
+  document.querySelectorAll('.skin').forEach(x=>x.classList.remove('selected'));
+  b.classList.add('selected');
+  player.userData.outfit.color.setHex(skinColors[Number(b.dataset.skin)]);
+ });
+});
+
+// BOTS
+function updateBots(){
+ document.querySelector('#bots').textContent=enemies.length;
+}
+
+function clearBots(){
+ enemies.forEach(e=>scene.remove(e));
+ enemies=[];
+ enemyMeshes=[];
+ updateBots();
+}
+
+function spawnBot(x,z){
+ const bot=createCharacter(0x873d35);
+ bot.position.set(x,0,z);
+ bot.userData.hp=100;
+ bot.userData.attack=1+Math.random();
+ bot.userData.dead=false;
+
+ scene.add(bot);
+ enemies.push(bot);
+
+ bot.traverse(o=>{
+  if(o.isMesh){
+   o.userData.enemy=bot;
+   enemyMeshes.push(o);
+  }
+ });
+}
+
+function spawnEnemies(){
+ clearBots();
+
+ for(let i=0;i<8;i++){
+  const a=Math.random()*Math.PI*2;
+  const d=22+Math.random()*30;
+  spawnBot(Math.sin(a)*d,Math.cos(a)*d);
+ }
+
+ updateBots();
+}
+
+// CÂMERA
+function updateCamera(){
+ const distance=aimMode?3.5:6.5;
+ const height=aimMode?2.45:3.5;
+
+ camera.position.set(
+  player.position.x+Math.sin(yaw)*distance,
+  player.position.y+height+pitch*3,
+  player.position.z+Math.cos(yaw)*distance
+ );
+
+ const target=player.position.clone();
+ target.y=aimMode?1.65:1.5;
+ target.x-=Math.sin(yaw)*2;
+ target.z-=Math.cos(yaw)*2;
+
+ camera.lookAt(target);
+}
+
+// RESULTADO
+function endGame(win){
+ if(gameOver)return;
+ gameOver=true;
+
+ document.querySelector('#messageText').textContent=
+  win?'VITÓRIA! TODOS OS BOTS FORAM ELIMINADOS':'VOCÊ FOI ELIMINADO';
+
+ document.querySelector('#message').style.display='flex';
+}
+
+function damage(amount){
+ if(gameOver)return;
+
+ health=Math.max(0,health-amount);
+
+ document.querySelector('#healthText').textContent=health;
+ document.querySelector('#healthFill').style.width=health+'%';
+
+ if(health<=0)endGame(false);
+}
+
+// TIRO
+function shoot(){
+ if(!started||gameOver)return;
+
+ const now=performance.now();
+ if(now-lastShot<260)return;
+ lastShot=now;
+
+ const ray=new THREE.Raycaster();
+ ray.setFromCamera(new THREE.Vector2(0,0),camera);
+
+ const hits=ray.intersectObjects(enemyMeshes,false);
+
+ if(hits.length){
+  const bot=hits[0].object.userData.enemy;
+
+  if(bot&&!bot.userData.dead){
+   bot.userData.hp-=35;
+
+   if(bot.userData.hp<=0){
+    bot.userData.dead=true;
+    scene.remove(bot);
+
+    enemies=enemies.filter(e=>e!==bot);
+    enemyMeshes=enemyMeshes.filter(o=>o.userData.enemy!==bot);
+
+    kills++;
+    document.querySelector('#kills').textContent=kills;
+    updateBots();
+
+    if(enemies.length===0)endGame(true);
+   }
+  }
+ }
+}
+
+// INTELIGÊNCIA DOS BOTS
+function updateEnemies(dt){
+ for(const bot of [...enemies]){
+  const dir=new THREE.Vector3(
+   player.position.x-bot.position.x,
+   0,
+   player.position.z-bot.position.z
+  );
+
+  const dist=dir.length();
+
+  if(dist>3.2){
+   dir.normalize();
+   bot.position.addScaledVector(dir,dt*2.0);
+   bot.rotation.y=Math.atan2(-dir.x,-dir.z);
+  }else{
+   bot.userData.attack-=dt;
+
+   if(bot.userData.attack<=0){
+    damage(5);
+    bot.userData.attack=1.2;
+   }
+  }
+ }
+}
+
+// MOVIMENTAÇÃO
+function updatePlayer(dt,t){
+ let f=0,s=0;
+
+ if(keys.w||keys.arrowup)f++;
+ if(keys.s||keys.arrowdown)f--;
+ if(keys.a||keys.arrowleft)s--;
+ if(keys.d||keys.arrowright)s++;
+
+ f-=joy.y;
+ s+=joy.x;
+
+ const len=Math.hypot(f,s);
+ if(len>1){f/=len;s/=len}
+
+ const speed=(running||keys.shift)?8.5:5;
+
+ const forward=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));
+ const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
+
+ const move=forward.multiplyScalar(f).add(right.multiplyScalar(s));
+
+ if(move.lengthSq()>.001){
+  move.normalize();
+  player.position.addScaledVector(move,speed*dt);
+
+  if(!aimMode){
+   player.rotation.y=Math.atan2(-move.x,-move.z);
+  }
+
+  player.userData.legs.forEach((leg,i)=>{
+   leg.rotation.x=Math.sin(t*11+i*Math.PI)*.55;
+  });
+ }else{
+  player.userData.legs.forEach(l=>l.rotation.x=0);
+ }
+
+ player.position.x=THREE.MathUtils.clamp(player.position.x,-118,118);
+ player.position.z=THREE.MathUtils.clamp(player.position.z,-118,118);
+
+ if(aimMode)player.rotation.y=yaw+Math.PI;
+}
+
+// INICIAR E REINICIAR
+function resetMatch(){
+ kills=0;
+ health=100;
+ gameOver=false;
+
+ player.position.set(0,0,0);
+ player.rotation.set(0,0,0);
+
+ yaw=0;
+ pitch=.12;
+
+ document.querySelector('#kills').textContent='0';
+ document.querySelector('#healthText').textContent='100';
+ document.querySelector('#healthFill').style.width='100%';
+ document.querySelector('#message').style.display='none';
+
+ spawnEnemies();
+}
+
+document.querySelector('#startGame').onclick=()=>{
+ if(started)return;
+
+ started=true;
+ document.body.classList.add('playing');
+ resetMatch();
+};
+
+document.querySelector('#again').onclick=resetMatch;
+
+document.querySelector('#backLobby').onclick=()=>{
+ started=false;
+ gameOver=false;
+
+ document.body.classList.remove('playing');
+
+ clearBots();
+
+ player.position.set(0,0,0);
+ yaw=0;
+ pitch=.12;
+ health=100;
+
+ document.querySelector('#message').style.display='none';
+ document.querySelector('#healthText').textContent='100';
+ document.querySelector('#healthFill').style.width='100%';
+};
+
+// TECLADO
+window.addEventListener('keydown',e=>{
+ keys[e.key.toLowerCase()]=true;
+});
+
+window.addEventListener('keyup',e=>{
+ keys[e.key.toLowerCase()]=false;
+});
+
+// JOYSTICK
+const stick=document.querySelector('#stick');
+const knob=document.querySelector('#knob');
+let stickId=null;
+
+stick.addEventListener('pointerdown',e=>{
+ stickId=e.pointerId;
+ stick.setPointerCapture(stickId);
+ moveStick(e);
+});
+
+stick.addEventListener('pointermove',e=>{
+ if(e.pointerId===stickId)moveStick(e);
+});
+
+function moveStick(e){
+ const r=stick.getBoundingClientRect();
+
+ let x=e.clientX-r.left-r.width/2;
+ let y=e.clientY-r.top-r.height/2;
+
+ const max=42;
+ const len=Math.hypot(x,y);
+
+ if(len>max){
+  x=x/len*max;
+  y=y/len*max;
+ }
+
+ joy={x:x/max,y:y/max};
+ knob.style.transform=`translate(${x}px,${y}px)`;
+}
+
+function resetStick(){
+ stickId=null;
+ joy={x:0,y:0};
+ knob.style.transform='translate(0,0)';
+}
+
+stick.addEventListener('pointerup',resetStick);
+stick.addEventListener('pointercancel',resetStick);
+
+// CORRER
+const runBtn=document.querySelector('#run');
+
+runBtn.addEventListener('pointerdown',e=>{
+ e.preventDefault();
+ running=true;
+});
+
+['pointerup','pointercancel','pointerleave'].forEach(ev=>{
+ runBtn.addEventListener(ev,()=>running=false);
+});
+
+// MIRA
+const aimBtn=document.querySelector('#aim');
+
+aimBtn.addEventListener('pointerdown',e=>{
+ e.preventDefault();
+ aimMode=true;
+});
+
+['pointerup','pointercancel','pointerleave'].forEach(ev=>{
+ aimBtn.addEventListener(ev,()=>aimMode=false);
+});
+
+// BOTÃO DE TIRO
+const fireBtn=document.querySelector('#fire');
+
+fireBtn.addEventListener('pointerdown',e=>{
+ e.preventDefault();
+ shooting=true;
+ shoot();
+});
+
+['pointerup','pointercancel','pointerleave'].forEach(ev=>{
+ fireBtn.addEventListener(ev,()=>shooting=false);
+});
+
+// CÂMERA
+let dragging=false;
+let lastX=0,lastY=0;
+
+renderer.domElement.addEventListener('pointerdown',e=>{
+ if(e.pointerType==='mouse'){
+  if(e.button===0&&started)shoot();
+  dragging=true;
+  lastX=e.clientX;
+  lastY=e.clientY;
+ }else if(started){
+  dragging=true;
+  lastX=e.clientX;
+  lastY=e.clientY;
+ }
+});
+
+window.addEventListener('pointerup',()=>dragging=false);
+
+window.addEventListener('pointermove',e=>{
+ if(!dragging||!started)return;
+
+ const dx=e.clientX-lastX;
+ const dy=e.clientY-lastY;
+
+ lastX=e.clientX;
+ lastY=e.clientY;
+
+ yaw-=dx*.006;
+ pitch=THREE.MathUtils.clamp(pitch+dy*.003,-.25,.65);
+});
+
+// LOOP DO JOGO
+let previous=performance.now();
+
+function animate(){
+ requestAnimationFrame(animate);
+
+ const now=performance.now();
+ const dt=Math.min((now-previous)/1000,.04);
+ previous=now;
+
+ if(started&&!gameOver){
+  updatePlayer(dt,now/1000);
+  updateEnemies(dt);
+
+  if(shooting)shoot();
+ }
+
+ updateCamera();
+ renderer.render(scene,camera);
+}
+
+updateCamera();
+animate();
+
+// REDIMENSIONAMENTO
+window.addEventListener('resize',()=>{
+ camera.aspect=innerWidth/innerHeight;
+ camera.updateProjectionMatrix();
+ renderer.setSize(innerWidth,innerHeight);
+});
+</script>
+</body>
+</html>
+

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>LAST DROP — Battle Royale</title>
+<title>LAST DROP — Battle Royale Low Poly</title>
 <style>
 :root{font-family:Arial,system-ui,sans-serif;color:#fff}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#17232a;touch-action:none}canvas{display:block}
 #game{position:fixed;inset:0}#hud{position:fixed;inset:0;pointer-events:none;text-shadow:0 2px 3px #000}
@@ -45,7 +45,7 @@ h1{margin:0;color:#c8f36a;font-size:40px;letter-spacing:2px}.card p{color:#dce6e
 <div id="rotateNotice">↻<br>GIRE O CELULAR PARA JOGAR NA HORIZONTAL</div>
 <div id="game"></div>
 <div id="hud">
- <div id="top"><div class="panel"><div class="brand">LAST DROP</div><div class="sub">BATTLE ROYALE • MOBILE</div></div>
+ <div id="top"><div class="panel"><div class="brand">LAST DROP</div><div class="sub">BATTLE ROYALE • LOW POLY</div></div>
  <div id="stats"><div class="panel stat">VIVOS<br><b id="alive">50</b></div><div class="panel stat">ABATES<br><b id="kills">0</b></div><div class="panel stat">TEMPO<br><b id="clock">12:00</b></div></div></div>
  <div id="minimap"><canvas id="mapCanvas" width="224" height="224"></canvas></div>
  <div id="zone" class="panel">ZONA SEGURA FECHANDO</div><div id="cross">+</div><div id="hitmark">✕</div>
@@ -64,22 +64,15 @@ h1{margin:0;color:#c8f36a;font-size:40px;letter-spacing:2px}.card p{color:#dce6e
 <div id="start">
  <div class="card">
   <h1>LAST DROP</h1>
-  <p><b>Battle Royale Low Poly</b><br>Salte do avião, procure armas e equipamentos, sobreviva à zona e seja o último de pé.</p>
-  <div id="mode"><span>50 COMBATENTES</span><span>•</span><span>49 BOTS</span><span>•</span><span>ILHA 3D</span></div>
+  <p><b>Estilo Low Poly 3D</b><br>Escolha sua skin exclusiva, salte na ilha e sobreviva até o fim!</p>
+  <div id="mode"><span>50 COMBATENTES</span><span>•</span><span>ILHA LOW POLY</span></div>
   <div id="skinTitle">ESCOLHA SUA SKIN</div>
   <div id="skinPicker"></div>
-  <p><b>Celular:</b> analógico à esquerda; arraste à direita para girar a câmera. Botões para mirar, atirar, pular e postura.</p>
   <button id="play">INICIAR PARTIDA</button>
-  <div class="sub" style="margin-top:10px">Protótipo local • bots simulados • requer internet para carregar o motor 3D</div>
  </div>
 </div>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-
-window.addEventListener('error', e => {
-    const t = document.getElementById('toast');
-    if(t) t.textContent = 'ERRO NO JOGO: ' + (e.message || 'falha ao iniciar');
-});
 
 const $ = id => document.getElementById(id), root = $('game');
 const scene = new THREE.Scene();
@@ -90,7 +83,6 @@ const camera = new THREE.PerspectiveCamera(66, innerWidth / innerHeight, .1, 350
 const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 1.15));
 renderer.setSize(innerWidth, innerHeight);
-renderer.domElement.style.touchAction = 'none';
 root.appendChild(renderer.domElement);
 
 scene.add(new THREE.HemisphereLight(0xe5f5ff, 0x536047, 1.8));
@@ -98,95 +90,67 @@ const sun = new THREE.DirectionalLight(0xffe7bf, 2.3);
 sun.position.set(-45, 75, 35);
 scene.add(sun);
 
-const M = c => new THREE.MeshStandardMaterial({ color: c, roughness: .88 });
+const M = c => new THREE.MeshStandardMaterial({ color: c, roughness: .85, flatShading: true });
 const mats = {
-    grass: M(0x718c50), sand: M(0xb8a477), wood: M(0x66452f),
-    roof: M(0x805747), wall: M(0xb9aa8d), rock: M(0x777c76),
-    metal: M(0x515e66), skin: M(0xd6a17d), dark: M(0x29333a),
-    leaf: [M(0x416c3d), M(0x567e43), M(0x688c4c)]
+    grass: M(0x718c50), wood: M(0x66452f), roof: M(0x805747), 
+    wall: M(0xb9aa8d), rock: M(0x777c76), skin: M(0xd6a17d), dark: M(0x29333a)
 };
 
 let obstacles = [], loot = [], botList = [];
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(240, 240), mats.grass);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(240, 240, 16, 16), mats.grass);
 ground.rotation.x = -Math.PI / 2;
 scene.add(ground);
 
-const sea = new THREE.Mesh(new THREE.PlaneGeometry(600, 600), M(0x367e99));
-sea.rotation.x = -Math.PI / 2;
-sea.position.y = -.3;
-scene.add(sea);
-
-function block(x, z, w, h, d, material, collide = true) {
-    let o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
-    o.position.set(x, h / 2, z);
+function block(x, z, w, h, d, mat) {
+    let o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    o.position.set(x, h/2, z);
     scene.add(o);
-    if(collide) obstacles.push({ x, z, w, d });
-    return o;
+    obstacles.push({ x, z, w, d });
 }
 
-function tree(x, z, s = 1) {
-    let t = new THREE.Mesh(new THREE.CylinderGeometry(.2 * s, .3 * s, 1.8 * s, 6), mats.wood);
-    t.position.set(x, .9 * s, z);
-    scene.add(t);
-    let l = new THREE.Mesh(new THREE.ConeGeometry(1.35 * s, 2.7 * s, 6), mats.leaf[Math.floor(Math.random() * 3)]);
-    l.position.set(x, 2.7 * s, z);
-    scene.add(l);
-    obstacles.push({ x, z, w: 1.1 * s, d: 1.1 * s });
-}
-
-function house(x, z, s = 1) {
-    block(x, z, 7 * s, 3.4 * s, 6 * s, mats.wall);
-    let r = new THREE.Mesh(new THREE.ConeGeometry(5 * s, 2.4 * s, 4), mats.roof);
-    r.rotation.y = Math.PI / 4;
-    r.position.set(x, 4.5 * s, z);
-    scene.add(r);
-}
-
-for(let i = 0; i < 35; i++) {
-    let x = (Math.random() - .5) * 180, z = (Math.random() - .5) * 180;
-    if(Math.hypot(x, z) < 18) continue;
-    if(i % 5 === 0) house(x, z, .7 + Math.random() * .4);
-    else tree(x, z, .7 + Math.random() * .8);
+for(let i = 0; i < 25; i++) {
+    let x = (Math.random() - .5) * 160, z = (Math.random() - .5) * 160;
+    if(Math.hypot(x, z) > 15) block(x, z, 6, 3, 6, mats.wall);
 }
 
 const player = { x: 0, z: 0, y: 0, yaw: 0, pitch: -.06, hp: 100, vest: 0, ammo: 30, reserve: 90, weapon: 'AR', kills: 0, alive: true, vy: 0, posture: 'normal', aim: false };
 
 const skinDefs = [
-    {name:'Assalto', emoji:'🪖', color:0x547fae, gear:'helmet'},
-    {name:'Samurai', emoji:'🥷', color:0xb52f25, gear:'samurai'},
-    {name:'Caixa', emoji:'📦', color:0x315bba, gear:'box'},
-    {name:'Ghillie', emoji:'🌿', color:0x425b36, gear:'ghillie'},
-    {name:'Ninja', emoji:'🥷', color:0x24252b, gear:'mask'},
-    {name:'Ninja Roxo', emoji:'💜', color:0x5532a0, gear:'hood'},
-    {name:'Ronin', emoji:'⚔️', color:0xb87932, gear:'horns'},
-    {name:'Robô', emoji:'🤖', color:0x2865a7, gear:'robot'},
-    {name:'Hazmat', emoji:'☣️', color:0xd4a52a, gear:'gas'},
-    {name:'Comando', emoji:'⭐', color:0x3d6c38, gear:'star'},
-    {name:'Cavaleiro', emoji:'🛡️', color:0x414b59, gear:'knight'},
-    {name:'Ranger', emoji:'🎯', color:0x2c7185, gear:'visor'},
-    {name:'Cabelo Azul', emoji:'💙', color:0x4c8ab8, gear:'bluehair'},
-    {name:'Alien', emoji:'👽', color:0x4a9b6c, gear:'alien'},
-    {name:'Herói', emoji:'🔥', color:0xb64b32, gear:'spikes'},
-    {name:'Urso', emoji:'🐻', color:0x98633d, gear:'bear'},
-    {name:'Bobo', emoji:'🤡', color:0x7142a5, gear:'jester'},
-    {name:'Galinha', emoji:'🐔', color:0xe6dfc9, gear:'chicken'}
+    {name:'Assalto', emoji:'🪖', color:0x547fae},
+    {name:'Samurai', emoji:'🥷', color:0xb52f25},
+    {name:'Ghillie', emoji:'🌿', color:0x425b36},
+    {name:'Ninja', emoji:'🥷', color:0x24252b},
+    {name:'Ninja Roxo', emoji:'💜', color:0x5532a0},
+    {name:'Robô', emoji:'🤖', color:0x2865a7},
+    {name:'Hazmat', emoji:'☣️', color:0xd4a52a},
+    {name:'Cavaleiro', emoji:'🛡️', color:0x414b59},
+    {name:'Alien', emoji:'👽', color:0x4a9b6c},
+    {name:'Urso', emoji:'🐻', color:0x98633d},
+    {name:'Bobo', emoji:'🤡', color:0x7142a5},
+    {name:'Galinha', emoji:'🐔', color:0xe6dfc9}
 ];
 
 let selectedSkin = 0;
 
-function person(color, skinIndex = 0) {
+function createChibiModel(colorHex) {
     let g = new THREE.Group();
-    let body = new THREE.Mesh(new THREE.CapsuleGeometry(.38, .72, 3, 6), M(color));
-    body.position.y = 1.05;
+    let body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.6, 0.3), M(colorHex));
+    body.position.y = 0.6;
     g.add(body);
-    let head = new THREE.Mesh(new THREE.BoxGeometry(.54, .56, .5), mats.skin);
-    head.position.y = 1.78;
+    
+    let head = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.7, 0.7), mats.skin);
+    head.position.y = 1.25;
     g.add(head);
+
+    let cap = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.2, 0.74), M(colorHex));
+    cap.position.y = 1.5;
+    g.add(cap);
+
     scene.add(g);
     return g;
 }
 
-let avatar = person(skinDefs[selectedSkin].color, selectedSkin);
+let avatar = createChibiModel(skinDefs[selectedSkin].color);
 
 function renderSkinPicker() {
     const holder = $('skinPicker');
@@ -197,12 +161,8 @@ function renderSkinPicker() {
         b.innerHTML = `<span>${d.emoji}</span>${d.name}`;
         b.addEventListener('click', () => {
             selectedSkin = i;
-            const pos = avatar.position.clone();
-            const rot = avatar.rotation.y;
             scene.remove(avatar);
-            avatar = person(d.color, i);
-            avatar.position.copy(pos);
-            avatar.rotation.y = rot;
+            avatar = createChibiModel(d.color);
             renderSkinPicker();
         });
         holder.appendChild(b);
@@ -210,28 +170,11 @@ function renderSkinPicker() {
 }
 renderSkinPicker();
 
-const weaponDefs = {
-    AR: { mag: 30, damage: 24, range: 55, rate: .16 },
-    MP40: { mag: 32, damage: 15, range: 32, rate: .085 },
-    SHOTGUN: { mag: 6, damage: 9, range: 15, rate: .65 }
-};
-
-function spawnLoot(x, z, type) {
-    let mesh = new THREE.Mesh(new THREE.BoxGeometry(.65, .25, .3), M(0xe5c34d));
-    mesh.position.set(x, .35, z);
-    scene.add(mesh);
-    loot.push({ x, z, type, mesh });
-}
-
-for(let i = 0; i < 45; i++) {
-    spawnLoot((Math.random() - .5) * 145, (Math.random() - .5) * 145, 'AR');
-}
-
-for(let i = 0; i < 49; i++) {
-    let a = Math.random() * Math.PI * 2, r = 20 + Math.random() * 72;
+for(let i = 0; i < 30; i++) {
+    let a = Math.random() * Math.PI * 2, r = 25 + Math.random() * 60;
     let b = {
         x: Math.cos(a) * r, z: Math.sin(a) * r, hp: 100, alive: true,
-        dir: Math.random() * 6.28, group: person(skinDefs[(i+1)%skinDefs.length].color, (i+1)%skinDefs.length)
+        dir: Math.random() * 6.28, group: createChibiModel(skinDefs[(i+1)%skinDefs.length].color)
     };
     b.group.position.set(b.x, 0, b.z);
     botList.push(b);
@@ -277,31 +220,18 @@ function hud() {
     $('ammo').textContent = `${player.mag} / ${player.reserve}`;
 }
 
-function blocked(x, z) {
-    return obstacles.some(o => Math.abs(x - o.x) < o.w/2 + .45 && Math.abs(z - o.z) < o.d/2 + .45);
-}
-
-function reload() {
-    let def = weaponDefs[player.weapon];
-    if(!def || player.mag === def.mag || player.reserve <= 0) return;
-    let n = Math.min(def.mag - player.mag, player.reserve);
-    player.mag += n; player.reserve -= n;
-    hud(); toast('RECARREGADO');
-}
-
 function shoot() {
     if(!started || ended || !player.alive) return;
-    if(player.mag <= 0) { reload(); return; }
+    if(player.mag <= 0) return;
     player.mag--; hud();
-    let fwd = new THREE.Vector3(Math.sin(player.yaw), 0, Math.cos(player.yaw));
     let target = null, bd = 55;
     for(let b of botList) {
         if(!b.alive) continue;
-        let dx = b.x - player.x, dz = b.z - player.z, d = Math.hypot(dx, dz);
+        let d = Math.hypot(b.x - player.x, b.z - player.z);
         if(d < bd) { target = b; bd = d; }
     }
     if(target) {
-        target.hp -= 25;
+        target.hp -= 34;
         if(target.hp <= 0) {
             target.alive = false;
             scene.remove(target.group);
@@ -311,7 +241,7 @@ function shoot() {
     }
 }
 
-let moveX = 0, moveY = 0, stickActive = false, stickId = null, fireHeld = false;
+let moveX = 0, moveY = 0, stickActive = false, stickId = null;
 const stick = $('stick'), nub = $('nub'), R = 62, N = 23;
 
 function placeStick(x, y) {
@@ -360,11 +290,9 @@ function releasePointer(e) {
 }
 window.addEventListener('pointerup', releasePointer, {passive: true});
 
-$('fire').addEventListener('pointerdown', e => { e.preventDefault(); fireHeld = true; shoot(); });
-$('fire').addEventListener('pointerup', () => fireHeld = false);
+$('fire').addEventListener('pointerdown', e => { e.preventDefault(); shoot(); });
 $('aim').addEventListener('click', () => { player.aim = !player.aim; camera.fov = player.aim ? 48 : 66; camera.updateProjectionMatrix(); });
 $('jump').addEventListener('click', () => { if(player.y <= .01) player.vy = 7.5; });
-$('reload').addEventListener('click', reload);
 
 $('play').addEventListener('click', () => {
     $('start').style.display = 'none';
@@ -378,7 +306,7 @@ function loop() {
     let dt = Math.min(clock.getDelta(), .04);
     if(started && !ended) {
         elapsed += dt; zoneTime -= dt;
-        if(zoneTime <= 0) { zoneTime = 55; zoneRadius = Math.max(15, zoneRadius - 13); }
+        if(zoneTime <= 0) { zoneTime = 55; zoneRadius = Math.max(15, zoneRadius - 12); }
         
         let f = -moveY, side = moveX;
         let speed = 8;
@@ -405,7 +333,7 @@ function loop() {
         if(botList.every(b => !b.alive)) {
             ended = true;
             $('message').style.display = 'block';
-            $('message').innerHTML = '🏆 VITÓRIA!';
+            $('message').innerHTML = '🏆 VITÓRIA ROYALE!';
         }
         
         hud();

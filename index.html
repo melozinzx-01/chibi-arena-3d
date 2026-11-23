@@ -64,7 +64,7 @@ h1{margin:0;color:#c8f36a;font-size:40px;letter-spacing:2px}.card p{color:#dce6e
 <div id="start">
  <div class="card">
   <h1>LAST DROP</h1>
-  <p><b>Estilo Low Poly 3D</b><br>Escolha sua skin exclusiva, salte na ilha e sobreviva até o fim!</p>
+  <p><b>Estilo Low Poly 3D</b><br>Escolha sua skin exclusiva[span_0](start_span)[span_0](end_span), salte na ilha e sobreviva até o fim[span_1](start_span)[span_1](end_span)!</p>
   <div id="mode"><span>50 COMBATENTES</span><span>•</span><span>ILHA LOW POLY</span></div>
   <div id="skinTitle">ESCOLHA SUA SKIN</div>
   <div id="skinPicker"></div>
@@ -243,18 +243,23 @@ function shoot() {
 
 let moveX = 0, moveY = 0, stickActive = false, stickId = null;
 const stick = $('stick'), nub = $('nub'), R = 62, N = 23;
+let stickOrigin = { x: 0, y: 0 };
 
 function placeStick(x, y) {
+    stickOrigin = { x, y };
     stick.style.display = 'block';
     stick.style.left = (x - R) + 'px';
     stick.style.top = (y - R) + 'px';
 }
 
 function moveStick(x, y) {
-    let dx = x - (parseInt(stick.style.left) + R), dy = y - (parseInt(stick.style.top) + R);
+    let dx = x - stickOrigin.x, dy = y - stickOrigin.y;
     let l = Math.hypot(dx, dy), m = R - N;
-    if(l > m) { dx = dx/l*m; dy = dy/l*m; }
-    moveX = dx / m; moveY = dy / m;
+    if(l > m) { dx = (dx / l) * m; dy = (dy / l) * m; }
+    
+    moveX = dx / m; 
+    moveY = dy / m;
+    
     nub.style.transform = `translate(${dx}px,${dy}px)`;
 }
 
@@ -270,7 +275,6 @@ window.addEventListener('pointerdown', e => {
     if(e.clientX < innerWidth * .48 && stickId === null) {
         stickId = e.pointerId; stickActive = true;
         placeStick(e.clientX, e.clientY);
-        moveStick(e.clientX, e.clientY);
     } else if(e.clientX >= innerWidth * .48 && !lookPointer) {
         lookPointer = { id: e.pointerId, x: e.clientX, y: e.clientY };
     }
@@ -289,6 +293,7 @@ function releasePointer(e) {
     if(lookPointer && e.pointerId === lookPointer.id) lookPointer = null;
 }
 window.addEventListener('pointerup', releasePointer, {passive: true});
+window.addEventListener('pointercancel', releasePointer, {passive: true});
 
 $('fire').addEventListener('pointerdown', e => { e.preventDefault(); shoot(); });
 $('aim').addEventListener('click', () => { player.aim = !player.aim; camera.fov = player.aim ? 48 : 66; camera.updateProjectionMatrix(); });

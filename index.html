@@ -64,7 +64,7 @@ h1{margin:0;color:#c8f36a;font-size:40px;letter-spacing:2px}.card p{color:#dce6e
 <div id="start">
  <div class="card">
   <h1>LAST DROP</h1>
-  <p><b>Estilo Low Poly 3D</b><br>Escolha sua skin exclusiva[span_0](start_span)[span_0](end_span), salte na ilha e sobreviva até o fim[span_1](start_span)[span_1](end_span)!</p>
+  <p><b>Estilo Low Poly 3D</b><br>Escolha sua skin exclusiva, salte na ilha e sobreviva até o fim!</p>
   <div id="mode"><span>50 COMBATENTES</span><span>•</span><span>ILHA LOW POLY</span></div>
   <div id="skinTitle">ESCOLHA SUA SKIN</div>
   <div id="skinPicker"></div>
@@ -313,7 +313,7 @@ function loop() {
         elapsed += dt; zoneTime -= dt;
         if(zoneTime <= 0) { zoneTime = 55; zoneRadius = Math.max(15, zoneRadius - 12); }
         
-        let f = -moveY, side = -movex;
+        let f = -moveY, side = -moveX; // Direção do analógico ajustada corretamente
         let speed = 8;
         let wx = Math.sin(player.yaw) * f + Math.cos(player.yaw) * side;
         let wz = Math.cos(player.yaw) * f - Math.sin(player.yaw) * side;

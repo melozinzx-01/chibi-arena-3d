@@ -313,7 +313,7 @@ function loop() {
         elapsed += dt; zoneTime -= dt;
         if(zoneTime <= 0) { zoneTime = 55; zoneRadius = Math.max(15, zoneRadius - 12); }
         
-        let f = -moveY, side = moveX;
+        let f = -moveY, side = -movex;
         let speed = 8;
         let wx = Math.sin(player.yaw) * f + Math.cos(player.yaw) * side;
         let wz = Math.cos(player.yaw) * f - Math.sin(player.yaw) * side;

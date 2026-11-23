@@ -1,545 +1,351 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>CyberStrike 3D - FPS Futurista</title>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background-color: #050510;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      user-select: none;
-    }
-    #crosshair {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 12px;
-      height: 12px;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      z-index: 10;
-    }
-    #crosshair::before, #crosshair::after {
-      content: '';
-      position: absolute;
-      background: #00ffff;
-      box-shadow: 0 0 6px #00ffff;
-    }
-    #crosshair::before {
-      top: 5px; left: 0; width: 12px; height: 2px;
-    }
-    #crosshair::after {
-      top: 0; left: 5px; width: 2px; height: 12px;
-    }
-    #hud {
-      position: absolute;
-      bottom: 24px;
-      left: 24px;
-      color: #00ffff;
-      text-shadow: 0 0 8px rgba(0,255,255,0.7);
-      font-size: 20px;
-      font-weight: bold;
-      letter-spacing: 2px;
-      z-index: 10;
-    }
-   Nenhum arquivo escolhido
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Arena Royale: Batalha de Energia</title>
+    <style>
+        * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+        body { margin: 0; padding: 0; background: #0f172a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        #game-container { position: relative; width: 100%; max-width: 800px; height: 100%; max-height: 600px; background: #1e293b; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        canvas { display: block; background: #0f172a; width: 100%; height: 100%; }
+        
+        #menu-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #0f172a 0%, #312e81 100%); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 20px; z-index: 10; overflow-y: auto; }
+        h1 { font-size: 28px; margin: 10px 0 5px 0; color: #38bdf8; text-shadow: 0 0 10px rgba(56,189,248,0.5); text-align: center; }
+        p.subtitle { color: #94a3b8; font-size: 14px; margin-bottom: 15px; text-align: center; }
+        
+        .skins-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%; max-width: 500px; max-height: 260px; overflow-y: auto; padding: 5px; background: rgba(15, 23, 42, 0.6); border-radius: 12px; border: 1px solid #334155; margin-bottom: 20px; }
+        .skin-card { background: #334155; border: 2px solid transparent; border-radius: 8px; padding: 8px; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: all 0.2s; }
+        .skin-card:hover { background: #475569; }
+        .skin-card.selected { border-color: #22c55e; background: rgba(34, 197, 94, 0.2); }
+        .skin-canvas { width: 40px; height: 40px; margin-bottom: 4px; }
+        .skin-name { font-size: 10px; text-align: center; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
 
-Crie um jogode tiro 3D futurista
+        .btn-start { background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); color: white; border: none; padding: 16px 40px; font-size: 20px; font-weight: bold; border-radius: 30px; cursor: pointer; box-shadow: 0 4px 15px rgba(34,197,94,0.4); animation: pulse 1.5s infinite; margin-top: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-start:active { transform: scale(0.95); }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
+        #hud { position: absolute; top: 0; left: 0; width: 100%; padding: 15px; display: none; justify-content: space-between; align-items: flex-start; pointer-events: none; z-index: 5; }
+        .hud-box { background: rgba(15, 23, 42, 0.8); border: 1px solid #334155; padding: 8px 15px; border-radius: 8px; font-size: 14px; font-weight: bold; }
+        
+        #mobile-controls { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; z-index: 5; }
+        .joystick-base { position: absolute; bottom: 30px; left: 30px; width: 120px; height: 120px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); border-radius: 50%; pointer-events: auto; }
+        .joystick-knob { position: absolute; top: 35px; left: 35px; width: 50px; height: 50px; background: rgba(56,189,248,0.6); border-radius: 50%; }
+        .fire-btn { position: absolute; bottom: 40px; right: 40px; width: 80px; height: 80px; background: rgba(239, 68, 68, 0.8); border: 3px solid #f87171; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; pointer-events: auto; box-shadow: 0 0 15px rgba(239,68,68,0.5); }
 
-Aqui está um protótipo completo e funcional de um jogo de tiro 3D em primeira pessoa (FPS) futurista, construído com Three.js diretamente em um único arquivo HTML.
-
-Você pode salvar o código abaixo como jogo.html e abrir em qualquer navegador moderno.
-
-Como jogar:
-Clique na tela: Ativa o controle de câmera (trava o cursor/Pointer Lock).
-W, A, S, D: Movimentação.
-Mouse: Mirar / Olhar em volta.
-Clique esquerdo: Disparar projéteis de plasma de energia.
-Objetivo: Destruir os drones sentinelas que patrulham a estação espacial.
-html
-
-
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <title>CyberStrike 3D - FPS Futurista</title>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background-color: #050510;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      user-select: none;
-    }
-    #crosshair {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 12px;
-      height: 12px;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      z-index: 10;
-    }
-    #crosshair::before, #crosshair::after {
-      content: '';
-      position: absolute;
-      background: #00ffff;
-      box-shadow: 0 0 6px #00ffff;
-    }
-    #crosshair::before {
-      top: 5px; left: 0; width: 12px; height: 2px;
-    }
-    #crosshair::after {
-      top: 0; left: 5px; width: 2px; height: 12px;
-    }
-    #hud {
-      position: absolute;
-      bottom: 24px;
-      left: 24px;
-      color: #00ffff;
-      text-shadow: 0 0 8px rgba(0,255,255,0.7);
-      font-size: 20px;
-      font-weight: bold;
-      letter-spacing: 2px;
-      z-index: 10;
-    }
-    #instructions {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: #fff;
-      text-align: center;
-      background: rgba(10, 15, 30, 0.85);
-      border: 1px solid #00ffff;
-      box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
-      padding: 30px 40px;
-      border-radius: 8px;
-      cursor: pointer;
-      z-index: 20;
-    }
-    #instructions h1 {
-      margin: 0 0 10px 0;
-      color: #00ffff;
-      font-size: 32px;
-      letter-spacing: 3px;
-    }
-    #instructions p {
-      margin: 6px 0;
-      color: #ccc;
-    }
-  </style>
+        #gameover-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.9); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
+        #gameover-title { font-size: 32px; font-weight: bold; margin-bottom: 10px; }
+    </style>
 </head>
 <body>
-  <div id="crosshair"></div>
-  <div id="hud">
-    <div>PONTOS: <span id="scoreDisplay">0</span></div>
-    <div>SENTINELAS ATIVAS: <span id="droneDisplay">0</span></div>
-  </div>
-  <div id="instructions">
-    <h1>CYBERSTRIKE 3D</h1>
-    <p>Clique aqui para iniciar a simulação</p>
-    <p style="font-size: 14px; margin-top: 15px; color: #88ffff;">[W, A, S, D] Mover | [Mouse] Mirar | [Clique] Disparo de Plasma</p>
-  </div>
+<div id="game-container">
+    <div id="menu-screen">
+        <h1>ARENA ROYALE</h1>
+        <p class="subtitle">Escolha sua skin[span_0](start_span)[span_0](end_span) e entre na batalha!</p>
+        <div class="skins-container" id="skins-grid"></div>
+        <button class="btn-start" id="start-btn">INICIAR PARTIDA</button>
+    </div>
 
-  <script src="[cdnjs.cloudflare.com](https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js)"></script>
-  <script>
-    let scene, camera, renderer;
-    let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
-    let prevTime = performance.now();
-    const velocity = new THREE.Vector3();
-    const direction = new THREE.Vector3();
-    let score = 0;
+    <div id="hud">
+        <div class="hud-box" id="hud-players">Vivos: 16</div>
+        <div class="hud-box" id="hud-zone">Zona: Segura</div>
+    </div>
 
-    const bullets = [];
-    const enemies = [];
-    const arenaSize = 80;
+    <div id="mobile-controls">
+        <div class="joystick-base" id="joystick-base">
+            <div class="joystick-knob" id="joystick-knob"></div>
+        </div>
+        <div class="fire-btn" id="fire-btn">ATIRAR</div>
+    </div>
 
-    const instructions = document.getElementById('instructions');
-    const scoreDisplay = document.getElementById('scoreDisplay');
-    const droneDisplay = document.getElementById('droneDisplay');
+    <div id="gameover-screen">
+        <div id="gameover-title">FIM DE JOGO</div>
+        <p id="gameover-subtitle" style="color: #94a3b8; margin-bottom: 20px;"></p>
+        <button class="btn-start" id="restart-btn">JOGAR NOVAMENTE</button>
+    </div>
 
-    // Câmera em primeira pessoa (FP controls manuais via Pointer Lock)
-    let isLocked = false;
-    let pitch = 0, yaw = 0;
+    <canvas id="gameCanvas"></canvas>
+</div>
 
-    instructions.addEventListener('click', () => {
-      document.body.requestPointerLock();
+<script>
+const skinNames = [
+    "Loiro Regata", "Soldado", "Samurai", "Saco de Papel", 
+    "Ghillie", "Ninja Balaclava", "Ninja Roxo", "Lutador Faixa", 
+    "Robô Azul", "Herói Dourado", "Traje Hazmat", "Boné Estrela", 
+    "Cavaleiro Negro", "Astronauta", "Xerife Cowboy", "Cabelo Azul", 
+    "Alien Azul", "Loiro Vermelha", "Urso", "Bobo da Corte", "Galinha"
+];
+
+let selectedSkinIndex = 0;
+const skinsGrid = document.getElementById('skins-grid');
+
+skinNames.forEach((name, index) => {
+    const card = document.createElement('div');
+    card.className = `skin-card ${index === 0 ? 'selected' : ''}`;
+    
+    const cvs = document.createElement('canvas');
+    cvs.className = 'skin-canvas';
+    cvs.width = 40; cvs.height = 40;
+    drawSkinPreview(cvs.getContext('2d'), index);
+    
+    const lbl = document.createElement('div');
+    lbl.className = 'skin-name';
+    lbl.innerText = name;
+    
+    card.appendChild(cvs);
+    card.appendChild(lbl);
+    
+    card.addEventListener('click', () => {
+        document.querySelectorAll('.skin-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        selectedSkinIndex = index;
     });
-   Nenhum arquivo escolhido
+    
+    skinsGrid.appendChild(card);
+});
 
-Crie um jogode tiro 3D futurista
+function drawSkinPreview(ctx, skinIdx) {
+    ctx.clearRect(0, 0, 40, 40);
+    ctx.save();
+    ctx.translate(20, 20);
+    ctx.scale(0.8, 0.8);
+    drawCharacterBody(ctx, skinIdx);
+    ctx.restore();
+}
 
-
-Aqui está um protótipo completo e funcional de um jogo de tiro 3D em primeira pessoa (FPS) futurista, construído com Three.js diretamente em um único arquivo HTML.
-
-Você pode salvar o código abaixo como jogo.html e abrir em qualquer navegador moderno.
-
-Como jogar:
-Clique na tela: Ativa o controle de câmera (trava o cursor/Pointer Lock).
-W, A, S, D: Movimentação.
-Mouse: Mirar / Olhar em volta.
-Clique esquerdo: Disparar projéteis de plasma de energia.
-Objetivo: Destruir os drones sentinelas que patrulham a estação espacial.
-html
-
-
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <title>CyberStrike 3D - FPS Futurista</title>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background-color: #050510;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      user-select: none;
+function drawCharacterBody(ctx, skinIdx) {
+    ctx.fillStyle = '#334155';
+    ctx.beginPath(); ctx.arc(0, 0, 14, 0, Math.PI * 2); ctx.fill();
+    switch(skinIdx) {
+        case 0: ctx.fillStyle = '#eab308'; ctx.fillRect(-6, -14, 12, 6); break;
+        case 1: ctx.fillStyle = '#15803d'; ctx.fillRect(-8, -12, 16, 8); break;
+        case 2: ctx.fillStyle = '#dc2626'; ctx.beginPath(); ctx.arc(0, -6, 12, Math.PI, 0, false); ctx.fill(); break;
+        case 3: ctx.fillStyle = '#ca8a04'; ctx.fillRect(-10, -12, 20, 16); break;
+        case 4: ctx.fillStyle = '#166534'; ctx.beginPath(); ctx.arc(0, 0, 16, 0, Math.PI*2); ctx.fill(); break;
+        case 5: case 6: ctx.fillStyle = skinIdx === 5 ? '#1e293b' : '#7c3aed'; ctx.fillRect(-10, -10, 20, 12); break;
+        case 8: ctx.fillStyle = '#38bdf8'; ctx.fillRect(-10, -14, 20, 10); break;
+        case 12: ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.arc(0, -4, 14, 0, Math.PI*2); ctx.fill(); break;
+        case 16: ctx.fillStyle = '#93c5fd'; ctx.beginPath(); ctx.ellipse(0, -6, 10, 12, 0, 0, Math.PI*2); ctx.fill(); break;
+        case 18: ctx.fillStyle = '#b45309'; ctx.beginPath(); ctx.arc(0, -12, 8, 0, Math.PI*2); ctx.fill(); break;
+        case 20: ctx.fillStyle = '#f8fafc'; ctx.beginPath(); ctx.arc(0, -10, 10, 0, Math.PI*2); ctx.fill(); break;
+        default: ctx.fillStyle = '#64748b'; ctx.fillRect(-8, -10, 16, 10); break;
     }
-    #crosshair {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 12px;
-      height: 12px;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      z-index: 10;
-    }
-    #crosshair::before, #crosshair::after {
-      content: '';
-      position: absolute;
-      background: #00ffff;
-      box-shadow: 0 0 6px #00ffff;
-    }
-    #crosshair::before {
-      top: 5px; left: 0; width: 12px; height: 2px;
-    }
-    #crosshair::after {
-      top: 0; left: 5px; width: 2px; height: 12px;
-    }
-    #hud {
-      position: absolute;
-      bottom: 24px;
-      left: 24px;
-      color: #00ffff;
-      text-shadow: 0 0 8px rgba(0,255,255,0.7);
-      font-size: 20px;
-      font-weight: bold;
-      letter-spacing: 2px;
-      z-index: 10;
-    }
-    #instructions {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: #fff;
-      text-align: center;
-      background: rgba(10, 15, 30, 0.85);
-      border: 1px solid #00ffff;
-      box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
-      padding: 30px 40px;
-      border-radius: 8px;
-      cursor: pointer;
-      z-index: 20;
-    }
-    #instructions h1 {
-      margin: 0 0 10px 0;
-      color: #00ffff;
-      font-size: 32px;
-      letter-spacing: 3px;
-    }
-    #instructions p {
-      margin: 6px 0;
-      color: #ccc;
-    }
-  </style>
-</head>
-<body>
-  <div id="crosshair"></div>
-  <div id="hud">
-    <div>PONTOS: <span id="scoreDisplay">0</span></div>
-    <div>SENTINELAS ATIVAS: <span id="droneDisplay">0</span></div>
-  </div>
-  <div id="instructions">
-    <h1>CYBERSTRIKE 3D</h1>
-    <p>Clique aqui para iniciar a simulação</p>
-    <p style="font-size: 14px; margin-top: 15px; color: #88ffff;">[W, A, S, D] Mover | [Mouse] Mirar | [Clique] Disparo de Plasma</p>
-  </div>
+}
+  const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
 
-  <script src="[cdnjs.cloudflare.com](https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js)"></script>
-  <script>
-    let scene, camera, renderer;
-    let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
-    let prevTime = performance.now();
-    const velocity = new THREE.Vector3();
-    const direction = new THREE.Vector3();
-    let score = 0;
+function resizeCanvas() {
+    canvas.width = canvas.parentElement.clientWidth;
+    canvas.height = canvas.parentElement.clientHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
 
-    const bullets = [];
-    const enemies = [];
-    const arenaSize = 80;
+let gameState = 'MENU';
+let player, bots, bullets, lootBoxes, zone;
+let keys = {};
+const worldSize = 2000;
 
-    const instructions = document.getElementById('instructions');
-    const scoreDisplay = document.getElementById('scoreDisplay');
-    const droneDisplay = document.getElementById('droneDisplay');
+document.getElementById('start-btn').addEventListener('click', startGame);
+document.getElementById('restart-btn').addEventListener('click', startGame);
 
-    // Câmera em primeira pessoa (FP controls manuais via Pointer Lock)
-    let isLocked = false;
-    let pitch = 0, yaw = 0;
+function startGame() {
+    document.getElementById('menu-screen').style.display = 'none';
+    document.getElementById('gameover-screen').style.display = 'none';
+    document.getElementById('hud').style.display = 'flex';
+    if ('ontouchstart' in window) {
+        document.getElementById('mobile-controls').style.display = 'block';
+    }
 
-    instructions.addEventListener('click', () => {
-      document.body.requestPointerLock();
+    player = { x: worldSize / 2, y: worldSize / 2, radius: 14, speed: 3.5, angle: 0, hp: 100, maxHp: 100, skin: selectedSkinIndex, kills: 0, fireCooldown: 0 };
+    bots = [];
+    for (let i = 0; i < 15; i++) {
+        bots.push({
+            x: Math.random() * (worldSize - 400) + 200,
+            y: Math.random() * (worldSize - 400) + 200,
+            radius: 14, speed: 2 + Math.random() * 1.2, angle: Math.random() * Math.PI * 2,
+            hp: 100, skin: Math.floor(Math.random() * skinNames.length), stateTimer: 0, targetX: worldSize / 2, targetY: worldSize / 2
+        });
+    }
+
+    bullets = [];
+    lootBoxes = [];
+    for (let i = 0; i < 20; i++) {
+        lootBoxes.push({ x: Math.random() * (worldSize - 200) + 100, y: Math.random() * (worldSize - 200) + 100, radius: 10 });
+    }
+
+    zone = { x: worldSize / 2, y: worldSize / 2, radius: 1000, targetRadius: 300, shrinkSpeed: 0.15 };
+    gameState = 'PLAYING';
+}
+
+window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+canvas.addEventListener('mousemove', e => {
+    if (gameState !== 'PLAYING') return;
+    const rect = canvas.getBoundingClientRect();
+    player.angle = Math.atan2((e.clientY - rect.top) - canvas.height / 2, (e.clientX - rect.left) - canvas.width / 2);
+});
+
+canvas.addEventListener('mousedown', () => { if (gameState === 'PLAYING') fireWeapon(player); });
+
+let joystickActive = false;
+let joystickData = { x: 0, y: 0 };
+const joystickBase = document.getElementById('joystick-base');
+const joystickKnob = document.getElementById('joystick-knob');
+
+joystickBase.addEventListener('touchstart', e => { joystickActive = true; updateJoystick(e.touches[0]); });
+window.addEventListener('touchmove', e => { if (joystickActive) updateJoystick(e.touches[0]); });
+window.addEventListener('touchend', () => { joystickActive = false; joystickData = { x: 0, y: 0 }; joystickKnob.style.transform = `translate(0px, 0px)`; });
+
+function updateJoystick(touch) {
+    const rect = joystickBase.getBoundingClientRect();
+    const dx = touch.clientX - (rect.left + rect.width / 2);
+    const dy = touch.clientY - (rect.top + rect.height / 2);
+    const dist = Math.hypot(dx, dy);
+    const maxDist = 40;
+    const angle = Math.atan2(dy, dx);
+    const clampedDist = Math.min(dist, maxDist);
+    joystickData.x = Math.cos(angle) * (clampedDist / maxDist);
+    joystickData.y = Math.sin(angle) * (clampedDist / maxDist);
+    joystickKnob.style.transform = `translate(${Math.cos(angle) * clampedDist}px, ${Math.sin(angle) * clampedDist}px)`;
+}
+
+document.getElementById('fire-btn').addEventListener('touchstart', () => { if (gameState === 'PLAYING') fireWeapon(player); });
+
+function fireWeapon(entity) {
+    if (entity.fireCooldown > 0) return;
+    entity.fireCooldown = 15;
+    let angle = entity.angle;
+    if (entity !== player && bots.length > 0) {
+        let target = player;
+        let minDist = Math.hypot(player.x - entity.x, player.y - entity.y);
+        bots.forEach(b => {
+            if (b !== entity) {
+                let d = Math.hypot(b.x - entity.x, b.y - entity.y);
+                if (d < minDist) { minDist = d; target = b; }
+            }
+        });
+        angle = Math.atan2(target.y - entity.y, target.x - entity.x);
+    }
+    bullets.push({ x: entity.x + Math.cos(angle) * 20, y: entity.y + Math.sin(angle) * 20, vx: Math.cos(angle) * 8, vy: Math.sin(angle) * 8, owner: entity, range: 400, distTraveled: 0 });
+}
+
+function updateGame() {
+    if (gameState !== 'PLAYING') return;
+    let dx = 0, dy = 0;
+    if (keys['w'] || keys['arrowup']) dy -= 1;
+    if (keys['s'] || keys['arrowdown']) dy += 1;
+    if (keys['a'] || keys['arrowleft']) dx -= 1;
+    if (keys['d'] || keys['arrowright']) dx += 1;
+
+    if (dx !== 0 || dy !== 0) {
+        const len = Math.hypot(dx, dy);
+        player.x += (dx / len) * player.speed;
+        player.y += (dy / len) * player.speed;
+        player.angle = Math.atan2(dy, dx);
+    } else if (joystickActive) {
+        player.x += joystickData.x * player.speed;
+        player.y += joystickData.y * player.speed;
+        if (joystickData.x !== 0 || joystickData.y !== 0) player.angle = Math.atan2(joystickData.y, joystickData.x);
+    }
+
+    player.x = Math.max(player.radius, Math.min(worldSize - player.radius, player.x));
+    player.y = Math.max(player.radius, Math.min(worldSize - player.radius, player.y));
+    if (player.fireCooldown > 0) player.fireCooldown--;
+
+    if (zone.radius > zone.targetRadius) zone.radius -= zone.shrinkSpeed;
+    if (Math.hypot(player.x - zone.x, player.y - zone.y) > zone.radius) player.hp -= 0.1;
+
+    bots.forEach(bot => {
+        bot.stateTimer++;
+        if (bot.stateTimer > 100) { bot.stateTimer = 0; bot.targetX = Math.random() * worldSize; bot.targetY = Math.random() * worldSize; }
+        const bdx = bot.targetX - bot.x, bdy = bot.targetY - bot.y, bdist = Math.hypot(bdx, bdy);
+        if (bdist > 10) { bot.x += (bdx / bdist) * bot.speed; bot.y += (bdy / bdist) * bot.speed; bot.angle = Math.atan2(bdy, bdx); }
+        if (Math.hypot(bot.x - zone.x, bot.y - zone.y) > zone.radius) bot.hp -= 0.15;
+        if (Math.random() < 0.02) fireWeapon(bot);
     });
 
-    document.addEventListener('pointerlockchange', () => {
-      if (document.pointerLockElement === document.body) {
-        isLocked = true;
-        instructions.style.display = 'none';
-      } else {
-        isLocked = false;
-        instructions.style.display = 'block';
-      }
+    bots = bots.filter(b => b.hp > 0);
+
+    bullets.forEach(b => {
+        b.x += b.vx; b.y += b.vy; b.distTraveled += Math.hypot(b.vx, b.vy);
+        if (b.owner !== player && Math.hypot(b.x - player.x, b.y - player.y) < player.radius) { player.hp -= 15; b.distTraveled = b.range; }
+        bots.forEach(bot => {
+            if (b.owner !== bot && Math.hypot(b.x - bot.x, b.y - bot.y) < bot.radius) {
+                bot.hp -= 25; b.distTraveled = b.range;
+                if (bot.hp <= 0 && b.owner === player) player.kills++;
+            }
+        });
+    });
+    bullets = bullets.filter(b => b.distTraveled < b.range);
+
+    lootBoxes = lootBoxes.filter(box => {
+        if (Math.hypot(player.x - box.x, player.y - box.y) < player.radius + box.radius) { player.hp = Math.min(player.maxHp, player.hp + 25); return false; }
+        return true;
     });
 
-    document.addEventListener('mousemove', (event) => {
-      if (!isLocked) return;
-      const sensitivity = 0.0022;
-      yaw -= event.movementX * sensitivity;
-      pitch -= event.movementY * sensitivity;
-      pitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, pitch));
+    document.getElementById('hud-players').innerText = `Vivos: ${bots.length + (player.hp > 0 ? 1 : 0)}`;
+    document.getElementById('hud-zone').innerText = Math.hypot(player.x - zone.x, player.y - zone.y) > zone.radius ? `FORA DA ZONA!` : `Zona Segura`;
+
+    if (player.hp <= 2) endGame(false);
+    else if (bots.length === 0) endGame(true);
+}
+
+function endGame(won) {
+    gameState = 'GAMEOVER';
+    document.getElementById('hud').style.display = 'none';
+    document.getElementById('mobile-controls').style.display = 'none';
+    const goScreen = document.getElementById('gameover-screen');
+    const goTitle = document.getElementById('gameover-title');
+    goScreen.style.display = 'flex';
+    goTitle.innerText = won ? "VITÓRIA ROYALE!" : "VOCÊ FOI ELIMINADO";
+    goTitle.style.color = won ? "#22c55e" : "#ef4444";
+    document.getElementById('gameover-subtitle').innerText = `Eliminações: ${player.kills}`;
+}
+
+function drawGame() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (gameState !== 'PLAYING') return;
+    ctx.save();
+    ctx.translate(canvas.width / 2 - player.x, canvas.height / 2 - player.y);
+
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, worldSize, worldSize);
+    ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 2;
+    for (let x = 0; x <= worldSize; x += 100) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, worldSize); ctx.stroke(); }
+    for (let y = 0; y <= worldSize; y += 100) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(worldSize, y); ctx.stroke(); }
+
+    ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.arc(zone.x, zone.y, zone.radius, 0, Math.PI * 2); ctx.stroke();
+
+    lootBoxes.forEach(box => {
+        ctx.fillStyle = '#eab308'; ctx.fillRect(box.x - 8, box.y - 8, 16, 16);
+        ctx.strokeStyle = '#854d0e'; ctx.lineWidth = 2; ctx.strokeRect(box.x - 8, box.y - 8, 16, 16);
     });
 
-    // Teclas
-    document.addEventListener('keydown', (e) => {
-      switch (e.code) {
-        case 'KeyW': moveForward = true; break;
-        case 'KeyS': moveBackward = true; break;
-        case 'KeyA': moveLeft = true; break;
-        case 'KeyD': moveRight = true; break;
-      }
+    bots.forEach(bot => {
+        ctx.save(); ctx.translate(bot.x, bot.y); ctx.rotate(bot.angle); drawCharacterBody(ctx, bot.skin); ctx.restore();
+        ctx.fillStyle = '#334155'; ctx.fillRect(bot.x - 15, bot.y - 22, 30, 4);
+        ctx.fillStyle = '#ef4444'; ctx.fillRect(bot.x - 15, bot.y - 22, (bot.hp / 100) * 30, 4);
     });
 
-    document.addEventListener('keyup', (e) => {
-      switch (e.code) {
-        case 'KeyW': moveForward = false; break;
-        case 'KeyS': moveBackward = false; break;
-        case 'KeyA': moveLeft = false; break;
-        case 'KeyD': moveRight = false; break;
-      }
+    ctx.save(); ctx.translate(player.x, player.y); ctx.rotate(player.angle); drawCharacterBody(ctx, player.skin); ctx.restore();
+    ctx.fillStyle = '#334155'; ctx.fillRect(player.x - 18, player.y - 25, 36, 5);
+    ctx.fillStyle = '#22c55e'; ctx.fillRect(player.x - 18, player.y - 25, (player.hp / player.maxHp) * 36, 5);
+
+    bullets.forEach(b => {
+        ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(b.x, b.y, 4, 0, Math.PI * 2); ctx.fill();
     });
+    ctx.restore();
+}
 
-    document.addEventListener('mousedown', (e) => {
-      if (isLocked && e.button === 0) {
-        shootPlasma();
-      }
-    });
-
-    init();
-    animate();
-
-    function init() {
-      // Cena e Névoa Futurista
-      scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x050714);
-      scene.fog = new THREE.FogExp2(0x050714, 0.02);
-
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      camera.position.set(0, 1.8, 0);
-
-      // Iluminação Sci-Fi
-      const ambientLight = new THREE.AmbientLight(0x223344, 1.5);
-      scene.add(ambientLight);
-
-      const dirLight = new THREE.DirectionalLight(0x00ffff, 1.2);
-      dirLight.position.set(20, 40, 20);
-      scene.add(dirLight);
-
-      // Chão em Grid Néon
-      const floorGrid = new THREE.GridHelper(arenaSize, 40, 0x00ffff, 0x113344);
-      floorGrid.position.y = 0;
-      scene.add(floorGrid);
-
-      const floorGeo = new THREE.PlaneGeometry(arenaSize, arenaSize);
-      const floorMat = new THREE.MeshStandardMaterial({ color: 0x080c18, roughness: 0.6, metalness: 0.8 });
-      const floor = new THREE.Mesh(floorGeo, floorMat);
-      floor.rotation.x = -Math.PI / 2;
-      scene.add(floor);
-
-      // Paredes perimetrais futuristas
-      createPillars();
-
-      // Renderizador
-      renderer = new THREE.WebGLRenderer({ antialias: true });
-      renderer.setPixelRatio(window.devicePixelRatio);
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      document.body.appendChild(renderer.domElement);
-
-      window.addEventListener('resize', onWindowResize);
-
-      // Criar inimigos iniciais
-      for (let i = 0; i < 6; i++) {
-        spawnEnemy();
-      }
-    }
-
-    function createPillars() {
-      const geo = new THREE.BoxGeometry(2, 8, 2);
-      const mat = new THREE.MeshStandardMaterial({ color: 0x1a223a, emissive: 0x003344 });
-      for (let i = -arenaSize / 2 + 5; i < arenaSize / 2; i += 12) {
-        for (let j = -arenaSize / 2 + 5; j < arenaSize / 2; j += 12) {
-          if (Math.abs(i) < 6 && Math.abs(j) < 6) continue;
-          const pillar = new THREE.Mesh(geo, mat);
-          pillar.position.set(i, 4, j);
-          scene.add(pillar);
-        }
-      }
-    }
-
-    function shootPlasma() {
-      const geo = new THREE.SphereGeometry(0.12, 8, 8);
-      const mat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
-      const bullet = new THREE.Mesh(geo, mat);
-
-      // Pega direção atual da mira
-      const dir = new THREE.Vector3();
-      camera.getWorldDirection(dir);
-
-      bullet.position.copy(camera.position).addScaledVector(dir, 0.5);
-      bullet.userData = {
-        direction: dir.clone(),
-        speed: 55,
-        life: 1.5
-      };
-
-      scene.add(bullet);
-      bullets.push(bullet);
-    }
-
-    function spawnEnemy() {
-      const group = new THREE.Group();
-      
-      // Núcleo do drone
-      const coreGeo = new THREE.OctahedronGeometry(0.8);
-      const coreMat = new THREE.MeshStandardMaterial({ color: 0xff0055, emissive: 0x880022, roughness: 0.3 });
-      const core = new THREE.Mesh(coreGeo, coreMat);
-      group.add(core);
-
-      // Anel orbital
-      const ringGeo = new THREE.TorusGeometry(1.2, 0.05, 8, 24);
-      const ringMat = new THREE.MeshBasicMaterial({ color: 0xff3377 });
-      const ring = new THREE.Mesh(ringGeo, ringMat);
-      group.add(ring);
-
-      const x = (Math.random() - 0.5) * (arenaSize - 15);
-      const z = (Math.random() - 0.5) * (arenaSize - 15);
-      group.position.set(x, 1.8 + Math.random() * 1.5, z);
-
-      group.userData = {
-        speed: 2 + Math.random() * 2,
-        ring: ring
-      };
-
-      scene.add(group);
-      enemies.push(group);
-      droneDisplay.textContent = enemies.length;
-    }
-
-    function onWindowResize() {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    }
-
-    function animate() {
-      requestAnimationFrame(animate);
-
-      const time = performance.now();
-      const delta = (time - prevTime) / 1000;
-      prevTime = time;
-
-      if (isLocked) {
-        // Rotação da câmera
-        const euler = new THREE.Euler(0, 0, 0, 'YXZ');
-        euler.x = pitch;
-        euler.y = yaw;
-        camera.quaternion.setFromEuler(euler);
-
-        // Movimentação do Jogador
-        velocity.x -= velocity.x * 10.0 * delta;
-        velocity.z -= velocity.z * 10.0 * delta;
-
-        direction.z = Number(moveForward) - Number(moveBackward);
-        direction.x = Number(moveRight) - Number(moveLeft);
-        direction.normalize();
-
-        const moveSpeed = 40.0;
-        if (moveForward || moveBackward) velocity.z -= direction.z * moveSpeed * delta;
-        if (moveLeft || moveRight) velocity.x -= direction.x * moveSpeed * delta;
-
-        // Projeta movimento relativo à rotação horizontal (yaw)
-        const forwardVector = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
-        const rightVector = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
-
-        camera.position.addScaledVector(forwardVector, -velocity.z * delta);
-        camera.position.addScaledVector(rightVector, -velocity.x * delta);
-
-        // Limites da Arena
-        const limit = arenaSize / 2 - 2;
-        camera.position.x = Math.max(-limit, Math.min(limit, camera.position.x));
-        camera.position.z = Math.max(-limit, Math.min(limit, camera.position.z));
-      }
-
-      // Atualizar Balas
-      for (let i = bullets.length - 1; i >= 0; i--) {
-        const b = bullets[i];
-        b.position.addScaledVector(b.userData.direction, b.userData.speed * delta);
-        b.userData.life -= delta;
-
-        // Colisão com inimigos
-        for (let j = enemies.length - 1; j >= 0; j--) {
-          const enemy = enemies[j];
-          if (b.position.distanceTo(enemy.position) < 1.3) {
-            scene.remove(enemy);
-            enemies.splice(j, 1);
-            scene.remove(b);
-            bullets.splice(i, 1);
-
-            score += 100;
-            scoreDisplay.textContent = score;
-            spawnEnemy();
-            break;
-          }
-        }
-
-        // Remover projétil expirado
-        if (b && b.userData.life <= 0) {
-          scene.remove(b);
-          bullets.splice(i, 1);
-        }
-      }
-
-      // Atualizar Inimigos (IA Básica de perseguição/flutuação)
-      for (const enemy of enemies) {
-        enemy.userData.ring.rotation.x += 0.03;
-        enemy.userData.ring.rotation.y += 0.02;
-
-        const toPlayer = new THREE.Vector3().subVectors(camera.position, enemy.position);
-        toPlayer.y = 0;
-        toPlayer.normalize();
-        enemy.position.addScaledVector(toPlayer, enemy.userData.speed * delta);
-      }
-
-      renderer.render(scene, camera);
-    }
-  </script>
+function gameLoop() {
+    updateGame();
+    drawGame();
+    requestAnimationFrame(gameLoop);
+}
+requestAnimationFrame(gameLoop);
+</script>
 </body>
 </html>

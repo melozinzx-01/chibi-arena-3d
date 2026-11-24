@@ -70,8 +70,7 @@ h1{margin:0;color:#c8f36a;font-size:40px;letter-spacing:2px}.card p{color:#dce6e
   <div id="skinPicker"></div>
   <button id="play">INICIAR PARTIDA</button>
  </div>
-</div>
-<script type="module">
+</d<script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 
 const $ = id => document.getElementById(id), root = $('game');
@@ -94,7 +93,7 @@ const M = c => new THREE.MeshStandardMaterial({ color: c, roughness: .85, flatSh
 const mats = {
     grass: M(0x718c50), wood: M(0x66452f), roof: M(0x805747), 
     wall: M(0xb9aa8d), rock: M(0x777c76), skin: M(0xd6a17d), dark: M(0x29333a),
-    visor: M(0x1a2634), hands: M(0x334455)
+    visor: M(0x1a2634), gold: M(0xd4af37), boxColor: M(0xc29b61)
 };
 
 let obstacles = [], loot = [], botList = [];
@@ -117,61 +116,71 @@ for(let i = 0; i < 25; i++) {
 const player = { x: 0, z: 0, y: 0, yaw: 0, pitch: -.06, hp: 100, vest: 0, ammo: 30, reserve: 90, weapon: 'AR', kills: 0, alive: true, vy: 0, posture: 'normal', aim: false };
 
 const skinDefs = [
-    {name:'Assalto', emoji:'🪖', color:0x547fae},
-    {name:'Samurai', emoji:'🥷', color:0xb52f25},
-    {name:'Ghillie', emoji:'🌿', color:0x425b36},
-    {name:'Ninja', emoji:'🥷', color:0x24252b},
-    {name:'Ninja Roxo', emoji:'💜', color:0x5532a0},
-    {name:'Robô', emoji:'🤖', color:0x2865a7},
-    {name:'Hazmat', emoji:'☣️', color:0xd4a52a},
-    {name:'Cavaleiro', emoji:'🛡️', color:0x414b59},
-    {name:'Alien', emoji:'👽', color:0x4a9b6c},
-    {name:'Urso', emoji:'🐻', color:0x98633d},
-    {name:'Bobo', emoji:'🤡', color:0x7142a5},
-    {name:'Galinha', emoji:'🐔', color:0xe6dfc9}
+    {name:'Assalto', emoji:'🪖', color:0x547fae, gear:'helmet'},
+    {name:'Samurai', emoji:'🥷', color:0xb52f25, gear:'samurai'},
+    {name:'Caixa', emoji:'📦', color:0x315bba, gear:'box'},
+    {name:'Ghillie', emoji:'🌿', color:0x425b36, gear:'ghillie'},
+    {name:'Ninja', emoji:'🥷', color:0x24252b, gear:'mask'},
+    {name:'Robô', emoji:'🤖', color:0x2865a7, gear:'robot'},
+    {name:'Hazmat', emoji:'☣️', color:0xd4a52a, gear:'visor'},
+    {name:'Cavaleiro', emoji:'🛡️', color:0x414b59, gear:'helmet'},
+    {name:'Alien', emoji:'👽', color:0x4a9b6c, gear:'visor'},
+    {name:'Urso', emoji:'🐻', color:0x98633d, gear:'ghillie'},
+    {name:'Bobo', emoji:'🤡', color:0x7142a5, gear:'samurai'},
+    {name:'Galinha', emoji:'🐔', color:0xe6dfc9, gear:'helmet'}
 ];
 
 let selectedSkin = 0;
 
-function createChibiModel(colorHex) {
+function createChibiModel(colorHex, gear = 'helmet') {
     let g = new THREE.Group();
-    let body = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.55, 0.32), M(colorHex));
+    let body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.55, 0.3), M(colorHex));
     body.position.y = 0.55;
     g.add(body);
 
-    let belt = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.12, 0.34), mats.dark);
-    belt.position.y = 0.32;
-    g.add(belt);
-    
-    let head = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.62, 0.64), mats.skin);
+    let head = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.6, 0.6), mats.skin);
     head.position.y = 1.15;
     g.add(head);
 
-    let visor = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.18, 0.12), mats.visor);
-    visor.position.set(0, 1.18, 0.32);
-    g.add(visor);
-
-    let helmet = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.28, 0.7), M(colorHex));
-    helmet.position.y = 1.52;
-    g.add(helmet);
-
-    let brim = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.08, 0.2), mats.dark);
-    brim.position.set(0, 1.42, 0.38);
-    g.add(brim);
-
-    let armLeft = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.45, 0.18), M(colorHex));
-    armLeft.position.set(-0.35, 0.55, 0);
+    let armLeft = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.42, 0.16), M(colorHex));
+    armLeft.position.set(-0.34, 0.55, 0);
     g.add(armLeft);
 
-    let armRight = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.45, 0.18), M(colorHex));
-    armRight.position.set(0.35, 0.55, 0);
+    let armRight = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.42, 0.16), M(colorHex));
+    armRight.position.set(0.34, 0.55, 0);
     g.add(armRight);
+
+    if (gear === 'samurai') {
+        let hornL = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.5, 0.1), mats.gold);
+        hornL.position.set(-0.35, 1.6, 0); hornL.rotation.z = -0.3;
+        let hornR = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.5, 0.1), mats.gold);
+        hornR.position.set(0.35, 1.6, 0); hornR.rotation.z = 0.3;
+        g.add(hornL, hornR);
+    } else if (gear === 'box') {
+        let box = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.7, 0.8), mats.boxColor);
+        box.position.y = 1.2;
+        g.add(box);
+    } else if (gear === 'ghillie') {
+        let earL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), M(colorHex));
+        earL.position.set(-0.35, 1.55, 0);
+        let earR = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), M(colorHex));
+        earR.position.set(0.35, 1.55, 0);
+        g.add(earL, earR);
+    } else if (gear === 'robot' || gear === 'visor') {
+        let visor = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.15, 0.15), mats.dark);
+        visor.position.set(0, 1.18, 0.32);
+        g.add(visor);
+    } else {
+        let helmet = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.25, 0.68), M(colorHex));
+        helmet.position.y = 1.5;
+        g.add(helmet);
+    }
 
     scene.add(g);
     return g;
 }
 
-let avatar = createChibiModel(skinDefs[selectedSkin].color);
+let avatar = createChibiModel(skinDefs[selectedSkin].color, skinDefs[selectedSkin].gear);
 
 function renderSkinPicker() {
     const holder = $('skinPicker');
@@ -183,7 +192,7 @@ function renderSkinPicker() {
         b.addEventListener('click', () => {
             selectedSkin = i;
             scene.remove(avatar);
-            avatar = createChibiModel(d.color);
+            avatar = createChibiModel(d.color, d.gear);
             renderSkinPicker();
         });
         holder.appendChild(b);
@@ -193,9 +202,10 @@ renderSkinPicker();
 
 for(let i = 0; i < 30; i++) {
     let a = Math.random() * Math.PI * 2, r = 25 + Math.random() * 60;
+    let botDef = skinDefs[(i+1)%skinDefs.length];
     let b = {
         x: Math.cos(a) * r, z: Math.sin(a) * r, hp: 100, alive: true,
-        dir: Math.random() * 6.28, group: createChibiModel(skinDefs[(i+1)%skinDefs.length].color)
+        dir: Math.random() * 6.28, group: createChibiModel(botDef.color, botDef.gear)
     };
     b.group.position.set(b.x, 0, b.z);
     botList.push(b);
@@ -205,7 +215,7 @@ const ring = new THREE.Mesh(new THREE.RingGeometry(.995, 1, 128), new THREE.Mesh
 ring.rotation.x = -Math.PI / 2;
 ring.position.y = .08;
 scene.add(ring);
-
+ iv>
 let zoneRadius = 100, zoneTime = 95, started = false, ended = false, elapsed = 0;
 const map = $('mapCanvas').getContext('2d');
 

@@ -93,7 +93,8 @@ scene.add(sun);
 const M = c => new THREE.MeshStandardMaterial({ color: c, roughness: .85, flatShading: true });
 const mats = {
     grass: M(0x718c50), wood: M(0x66452f), roof: M(0x805747), 
-    wall: M(0xb9aa8d), rock: M(0x777c76), skin: M(0xd6a17d), dark: M(0x29333a)
+    wall: M(0xb9aa8d), rock: M(0x777c76), skin: M(0xd6a17d), dark: M(0x29333a),
+    visor: M(0x1a2634), hands: M(0x334455)
 };
 
 let obstacles = [], loot = [], botList = [];
@@ -134,17 +135,37 @@ let selectedSkin = 0;
 
 function createChibiModel(colorHex) {
     let g = new THREE.Group();
-    let body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.6, 0.3), M(colorHex));
-    body.position.y = 0.6;
+    let body = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.55, 0.32), M(colorHex));
+    body.position.y = 0.55;
     g.add(body);
+
+    let belt = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.12, 0.34), mats.dark);
+    belt.position.y = 0.32;
+    g.add(belt);
     
-    let head = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.7, 0.7), mats.skin);
-    head.position.y = 1.25;
+    let head = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.62, 0.64), mats.skin);
+    head.position.y = 1.15;
     g.add(head);
 
-    let cap = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.2, 0.74), M(colorHex));
-    cap.position.y = 1.5;
-    g.add(cap);
+    let visor = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.18, 0.12), mats.visor);
+    visor.position.set(0, 1.18, 0.32);
+    g.add(visor);
+
+    let helmet = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.28, 0.7), M(colorHex));
+    helmet.position.y = 1.52;
+    g.add(helmet);
+
+    let brim = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.08, 0.2), mats.dark);
+    brim.position.set(0, 1.42, 0.38);
+    g.add(brim);
+
+    let armLeft = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.45, 0.18), M(colorHex));
+    armLeft.position.set(-0.35, 0.55, 0);
+    g.add(armLeft);
+
+    let armRight = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.45, 0.18), M(colorHex));
+    armRight.position.set(0.35, 0.55, 0);
+    g.add(armRight);
 
     scene.add(g);
     return g;
@@ -313,7 +334,7 @@ function loop() {
         elapsed += dt; zoneTime -= dt;
         if(zoneTime <= 0) { zoneTime = 55; zoneRadius = Math.max(15, zoneRadius - 12); }
         
-        let f = -moveY, side = -moveX; // Direção do analógico ajustada corretamente
+        let f = -moveY, side = -moveX;
         let speed = 8;
         let wx = Math.sin(player.yaw) * f + Math.cos(player.yaw) * side;
         let wz = Math.cos(player.yaw) * f - Math.sin(player.yaw) * side;
